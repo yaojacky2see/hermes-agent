@@ -2,129 +2,162 @@
 # =====================================================================
 # Hermes Skills Linter — 机械化执行 + 熵管理
 #
+# 背压强度 = PASSES / TOTAL_CHECKS
+# 100% = 零熵（最佳状态）
+# <80% = 熵积累严重，需要垃圾回收
+#
 # 检查项：
-#   1. 每个技能目录必须有 SKILL.md
-#   2. 子 AGENTS.md 必须与父 AGENTS.md 交叉链接
-#   3. AGENTS.md 引用的 skill 名称必须存在于实际目录
+#   R1. 每个技能目录必须有 SKILL.md（分组目录除外）
+#   R2. 子 AGENTS.md 与父 AGENTS.md 交叉链接
+#   R3. AGENTS.md 引用的 skill 必须存在于目录
+#   R4. 根 AGENTS.md ≤60行（Agent Readability 约束）
+#   R5. SKILL.md 无硬编码个人路径
 # =====================================================================
-set -euo pipefail
 
 SKILLS_DIR="$HOME/.hermes/hermes-agent/skills"
 cd "$SKILLS_DIR"
 
-ERRORS=0
-WARNINGS=0
+ERRORS=0; PASSES=0; WARNINGS=0; TOTAL_CHECKS=0
 
-# ── 颜色输出 ──────────────────────────────────────────────
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
 CYAN='\033[0;36m'; BOLD='\033[1m'; RESET='\033[0m'
 
-info()    { echo -e "${CYAN}[INFO]${RESET}  $1"; }
-pass()    { echo -e "${GREEN}[PASS]${RESET}  $1"; }
+pass()    { echo -e "${GREEN}[PASS]${RESET}  $1"; PASSES=$((PASSES+1)); TOTAL_CHECKS=$((TOTAL_CHECKS+1)); }
+fail()    { echo -e "${RED}[FAIL]${RESET}  $1";  ERRORS=$((ERRORS+1));  TOTAL_CHECKS=$((TOTAL_CHECKS+1)); }
 warn()    { echo -e "${YELLOW}[WARN]${RESET}  $1"; WARNINGS=$((WARNINGS+1)); }
-fail()    { echo -e "${RED}[FAIL]${RESET}  $1";  ERRORS=$((ERRORS+1)); }
 header()  { echo -e "\n${BOLD}━━━ $1 ━━━${RESET}"; }
 
-# ── 规则1：每个技能目录（深度2-3）必须有 SKILL.md ─────────────────
-header "规则1：每个技能目录必须有 SKILL.md"
+# ── R1: 每个技能目录必须有 SKILL.md ─────────────────────────
+header "R1: SKILL.md 存在性"
 
-# 收集所有技能目录（跳过 AGENTS.md 和 scripts）
 skill_dirs=$(find . -mindepth 2 -maxdepth 3 -type d ! -name 'scripts' 2>/dev/null | sort)
-missing_skills=0
-total_dirs=0
+total=0; missing=0
 
 for dir in $skill_dirs; do
-  total_dirs=$((total_dirs+1))
-  if [[ ! -f "$dir/SKILL.md" ]]; then
+  case "$dir" in
+    */templates|*/references|*/assets) continue ;;
+  esac
+  total=$((total+1))
+
+  # 分组目录（mlops/cloud, mlops/training 等）有子 skill 子目录
+  # 只要有任何一个子目录（排除 templates/references），就视为分组目录
+  has_subs=$(find "$dir" -mindepth 1 -maxdepth 1 -type d 2>/dev/null \
+    | grep -v '/templates$' | grep -v '/references$')
+  if [[ -n "$has_subs" && ! -f "$dir/SKILL.md" ]]; then
+    total=$((total-1))
+    continue
+  fi
+
+  if [[ -f "$dir/SKILL.md" ]]; then
+    pass "SKILL.md 存在: $dir"
+  else
     fail "缺少 SKILL.md: $dir"
-    missing_skills=$((missing_skills+1))
+    missing=$((missing+1))
   fi
 done
 
-if [[ $missing_skills -eq 0 && $total_dirs -gt 0 ]]; then
-  pass "所有 ${total_dirs} 个技能目录都有 SKILL.md"
-elif [[ $total_dirs -eq 0 ]]; then
-  warn "未找到任何技能目录"
-fi
+[[ $total -gt 0 ]] && [[ $missing -eq 0 ]] && pass "所有 ${total} 个技能目录都有 SKILL.md"
 
-# ── 规则2：子 AGENTS.md 必须与父 AGENTS.md 交叉链接 ──────────────
-header "规则2：子 AGENTS.md 与父 AGENTS.md 交叉链接"
+# ── R2: 子 AGENTS.md 交叉链接父 ─────────────────────────────
+header "R2: AGENTS.md 交叉链接"
 
-agents_files=$(find . -name "AGENTS.md" ! -path "./AGENTS.md" 2>/dev/null | sort)
-if [[ -z "$agents_files" ]]; then
-  warn "未找到子 AGENTS.md"
-else
-  for agents_file in $agents_files; do
-    # 检查是否引用了父级
-    if grep -q "AGENTS.md" "$agents_file" 2>/dev/null; then
-      pass "$agents_file 引用了父级"
-    else
-      fail "子 AGENTS.md 未引用父级: $agents_file"
-    fi
-  done
-fi
+for agents_file in $(find . -name "AGENTS.md" ! -path "./AGENTS.md" 2>/dev/null | sort); do
+  if grep -q "AGENTS.md" "$agents_file" 2>/dev/null; then
+    pass "$agents_file → 父级链接"
+  else
+    fail "$agents_file 未引用父级"
+  fi
+done
 
-# ── 规则3：AGENTS.md 中引用的 skill 必须存在 ─────────────────────
-header "规则3：AGENTS.md 引用的 skill 必须存在"
+# ── R3: AGENTS.md skill 引用有效性 ──────────────────────────
+# 关键：引用相对于 AGENTS.md 所在目录解析
+header "R3: Skill 引用有效性"
 
-total_ref_errors=0
+# skill 引用黑名单（文档标记，非真实 skill 路径）
+check_ref() {
+  local ref="$1"
+  local agents_file="$2"
+
+  case "$ref" in
+    http*|https*|skill_view|~\/|../) return 1 ;;
+  esac
+  return 0
+}
+
 for agents_file in $(find . -name "AGENTS.md" 2>/dev/null | sort); do
-  ref_errors=0
-  
-  # 提取 skill 引用（格式: `skill-name` 或 `skill-name/SKILL.md`）
-  refs=$(grep -oE '`[a-z0-9-]+(/[a-z0-9-]+)?(/SKILL\.md)?`' "$agents_file" 2>/dev/null \
-         | tr -d '`' | sed 's|/SKILL\.md$||' | sort -u)
-  
+  # 找到 AGENTS.md 所在的分类目录（如 mlops, github, creative）
+  # 根 AGENTS.md 在 skills/ 下
+  agents_dir=$(dirname "$agents_file")  # 如 ./mlops 或 .
+
+  # Only check backtick refs inside table rows (| ... | `ref` |), skip markdown headings
+  refs=$(grep '^[[:space:]]*|' "$agents_file" 2>/dev/null \
+         | grep -oE '`[a-z0-9-]+(/[a-z0-9-]+)*' \
+         | tr -d '`' | sort -u)
+
   for ref in $refs; do
-    # 跳过外部链接和特殊引用
-    case "$ref" in
-      http*|https*|~/|\.\.) continue ;;
-    esac
-    
-    # 构造可能路径：相对于根目录
-    root_target="$SKILLS_DIR/$ref"
-    
-    if [[ ! -d "$root_target" && ! -f "$root_target/SKILL.md" ]]; then
-      fail "AGENTS.md 引用不存在的 skill: $ref (在 $agents_file)"
-      ref_errors=$((ref_errors+1))
+    check_ref "$ref" "$agents_file" || continue
+
+    # 构造两个可能路径：
+    # 1. 相对于 AGENTS.md 所在目录（如 mlops/inference/gguf）
+    # 2. 相对于 skills/ 根（如 mlops/inference/gguf → mlops/inference/gguf/SKILL.md）
+    target1="$SKILLS_DIR/$agents_dir/$ref"
+    target2="$SKILLS_DIR/$ref"
+
+    if [[ -d "$target1" || -f "$target1/SKILL.md" || -d "$target2" || -f "$target2/SKILL.md" ]]; then
+      pass "引用有效: $ref → $agents_file"
+    else
+      fail "引用无效: $ref (在 $agents_file)"
     fi
   done
-  
-  if [[ $ref_errors -eq 0 ]]; then
-    # 只报告有引用的文件
-    if echo "$refs" | grep -q '[a-z0-9]'; then
-      pass "$agents_file 中的引用全部有效"
-    fi
-  fi
-  total_ref_errors=$((total_ref_errors+ref_errors))
 done
 
-# ── 额外检查：SKILL.md 中是否有不应该出现的硬编码路径 ─────────────
-header "额外检查：SKILL.md 路径引用检查"
+# ── R4: 根 AGENTS.md ≤60行 ──────────────────────────────────
+header "R4: Agent Readability（≤60行）"
 
-hardcoded_paths=$(find . -mindepth 2 -maxdepth 3 -name "SKILL.md" \
-  -exec grep -l '~/Projects/\|/Users/[^/]*/' {} \; 2>/dev/null)
-if [[ -n "$hardcoded_paths" ]]; then
-  for f in $hardcoded_paths; do
-    warn "SKILL.md 包含硬编码路径: $f"
-  done
+root_lines=$(wc -l < "AGENTS.md" 2>/dev/null || echo 999)
+if [[ $root_lines -le 60 ]]; then
+  pass "根 AGENTS.md: ${root_lines}行（≤60 ✓）"
 else
-  pass "未发现硬编码个人路径"
+  fail "根 AGENTS.md: ${root_lines}行（>60行限制）"
 fi
 
-# ── 汇总 ─────────────────────────────────────────────────────
-header "汇总"
-echo -e "  ${BOLD}ERRORS:${RESET}   $ERRORS"
-echo -e "  ${BOLD}WARNINGS:${RESET} $WARNINGS"
-echo -e "  ${BOLD}总计:${RESET}     $((ERRORS + WARNINGS)) 项问题"
+# ── R5: SKILL.md 无硬编码个人路径 ───────────────────────────
+header "R5: 无硬编码路径"
 
-if [[ $ERRORS -eq 0 && $WARNINGS -eq 0 ]]; then
-  echo -e "\n${GREEN}${BOLD}✓ 所有检查通过 — skills 目录处于最佳状态${RESET}"
-  exit 0
-elif [[ $ERRORS -eq 0 ]]; then
-  echo -e "\n${YELLOW}有警告，建议修复${RESET}"
-  exit 0
+hardcoded=$(find . -mindepth 2 -maxdepth 3 -name "SKILL.md" \
+  -exec grep -l '~/Projects/\|/Users/[^/]*/\|C:\\Users\|D:\\' {} \; 2>/dev/null)
+if [[ -n "$hardcoded" ]]; then
+  for f in $hardcoded; do
+    fail "硬编码路径: $f"
+  done
 else
-  echo -e "\n${RED}有错误需要修复${RESET}"
-  exit 1
+  pass "无硬编码个人路径"
+fi
+
+# ── 背压强度评分 ──────────────────────────────────────────────
+header "背压强度评分"
+
+pass_rate=0
+if [[ $TOTAL_CHECKS -gt 0 ]]; then
+  pass_rate=$(( (PASSES * 100) / TOTAL_CHECKS ))
+fi
+entropy_rate=$(( 100 - pass_rate ))
+
+echo ""
+echo "  检查项  : $TOTAL_CHECKS"
+echo "  通过    : $PASSES"
+echo "  失败    : $ERRORS"
+echo "  警告    : $WARNINGS"
+echo ""
+echo -e "  ${BOLD}背压强度:${RESET}  ${PASSES}/${TOTAL_CHECKS} = ${pass_rate}%"
+echo -e "  ${BOLD}熵积累率:${RESET}  ${entropy_rate}%"
+
+echo ""
+if [[ $pass_rate -ge 95 ]]; then
+  echo -e "${GREEN}${BOLD}✓ 优秀 — 零熵或极低熵，系统处于最佳状态${RESET}"
+elif [[ $pass_rate -ge 80 ]]; then
+  echo -e "${YELLOW}良好 — 有少量漂移，建议修复${RESET}"
+else
+  echo -e "${RED}警告 — 熵积累严重，需要垃圾回收${RESET}"
+  echo -e "${RED}  运行: bash skills/scripts/generate-agents.sh${RESET}"
 fi

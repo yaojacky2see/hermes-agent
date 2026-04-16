@@ -24,95 +24,50 @@ BOLD='\033[1m'; RESET='\033[0m'
 pass() { echo -e "${GREEN}[GEN]${RESET}  $1"; }
 warn() { echo -e "${RED}[WARN]${RESET}  $1"; }
 
-# ── 从 SKILL.md 提取真实描述（跳过 YAML frontmatter）─────────────
+# ── 从 SKILL.md 提取真实描述 ──────────────────────────────────
 get_description() {
   local skill_md="$1"
   if [[ ! -f "$skill_md" ]]; then
     echo ""
     return
   fi
-
   if grep -q '^---$' "$skill_md" 2>/dev/null; then
     local desc=$(awk '/^---$/,/^---$/ {next} /^description:/ {sub(/^description:[[:space:]]*/, ""); print; exit}' "$skill_md")
-    if [[ -n "$desc" ]]; then
-      echo "$desc"
-      return
-    fi
+    [[ -n "$desc" ]] && echo "$desc" && return
   fi
-
   sed -n '1,/^[#>]/p' "$skill_md" 2>/dev/null \
     | grep -v '^#' | grep -v '^>' | grep -v '^$' | grep -v '^---$' \
-    | head -1 \
-    | sed 's/^[[:space:]]*//; s/[[:space:]]*$//; s/^"//; s/"$//'
+    | head -1 | sed 's/^[[:space:]]*//; s/[[:space:]]*$//; s/^"//; s/"$//'
 }
 
-# ── 分类标签 ─────────────────────────────────────────────────
-get_category() {
-  case "$1" in
-    apple)          echo "🍎 Apple 系统" ;;
-    creative)       echo "🎨 创意工具" ;;
-    data-science)   echo "📊 数据科学" ;;
-    devops)         echo "🔧 DevOps" ;;
-    docker*)        echo "🐳 Docker" ;;
-    dogfood)        echo "🐕 Dogfood" ;;
-    domain)         echo "🌐 域名/网站" ;;
-    email)          echo "📧 邮件" ;;
-    feeds)          echo "📡 信息源" ;;
-    fitness*)       echo "💪 健身/营养" ;;
-    gaming)         echo "🎮 游戏" ;;
-    gifs)           echo "🎬 GIF" ;;
-    github)         echo "🐙 GitHub" ;;
-    index-cache)    echo "🗂️ 索引/缓存" ;;
-    leisure)        echo "🌿 生活休闲" ;;
-    mcp)            echo "🔌 MCP 协议" ;;
-    media)          echo "🎞️ 媒体处理" ;;
-    mlops)          echo "🤖 MLOps" ;;
-    note-taking)    echo "📝 笔记" ;;
-    one-three-one*) echo "⚖️ 决策框架" ;;
-    productivity)   echo "📎 生产力" ;;
-    qmd)            echo "🧠 QMD 知识库" ;;
-    red-teaming)    echo "🛡️ 红队/越狱" ;;
-    research)       echo "🔬 研究工具" ;;
-    smart-home)     echo "🏠 智能家居" ;;
-    social-media)   echo "📱 社交媒体" ;;
-    software-dev*)  echo "💻 软件开发" ;;
-    testing)        echo "🧪 测试" ;;
-    autonomous*)    echo "🤖 AI Agent 调度" ;;
-    *)              echo "📦 工具" ;;
-  esac
-}
-
-# ── 生成根 AGENTS.md（≤60行紧凑路由表）─────────────────────────────
-# HumanLayer规则：AGENTS.md >60行效果下降
-# 约束越严，自主性越强
+# ── 生成根 AGENTS.md（≤60行路由表）───────────────────────────────
 generate_root_agents() {
   local out="AGENTS.md"
 
   {
     echo "# Hermes Agent Skills — 智能体地图"
     echo ""
-    echo "> 本文件由 \`generate-agents.sh\` 自动生成。完整详情在子目录 AGENTS.md。"
+    echo "> 本文件由 \`generate-agents.sh\` 自动生成。"
     echo "> **核心原则：仓库即记录系统。**"
     echo ""
     echo "---"
     echo ""
-    echo "## 路由表（按任务类型）"
+    echo "## 快速路由"
     echo ""
-    echo "| 任务 | Skill | 入口 |"
-    echo "|------|-------|------|"
-    echo "| GitHub/PR/Issues | \`github-pr-workflow\` \`github-code-review\` \`github-issues\` | github/ |"
-    echo "| MLOps全流程 | 微调/推理/评估/云GPU | mlops/ |"
-    echo "| 创意媒体 | ascii/art/video, excalidraw, youtube, gif | creative/ |"
-    echo "| 预测市场/研究 | \`polymarket\` \`arxiv\` \`llm-wiki\` | research/ |"
-    echo "| macOS系统 | \`apple-notes\` \`apple-reminders\` \`findmy\` \`imessage\` | apple/ |"
-    echo "| 代码开发 | \`plan\` \`systematic-debugging\` \`test-driven-development\` \`subagent-driven\` | software-dev/ |"
-    echo "| Agent调度 | \`claude-code\` \`codex\` \`opencode\` | autonomous/ |"
-    echo "| 效率工具 | \`notion\` \`linear\` \`powerpoint\` \`ocr-pdf\` \`google-workspace\` | productivity/ |"
-    echo "| Webhook/自动化 | \`webhook-subscriptions\` | devops/ |"
-    echo "| Docker | \`docker-management\` | docker/ |"
-    echo "| 个人数据 | \`openhue\` \`himalaya\` \`obsidian\` | — |"
-    echo "| 健身/游戏 | \`fitness-nutrition\` \`minecraft\` \`pokemon\` | — |"
-    echo "| 社交媒体 | \`xitter\` | social-media/ |"
+    echo "| 任务 | 入口 |"
+    echo "|------|------|"
+    echo "| GitHub/PR/Issues/代码审查 | [github/AGENTS.md](github/AGENTS.md) |"
+    echo "| MLOps：训练/推理/评估/云GPU | [mlops/AGENTS.md](mlops/AGENTS.md) |"
+    echo "| 创意：ascii/art/video/excalidraw | [creative/AGENTS.md](creative/AGENTS.md) |"
+    echo "| 研究：arxiv/llm-wiki/polymarket | [research/AGENTS.md](research/AGENTS.md) |"
+    echo "| macOS：Notes/Reminders/FindMy/iMessage | [apple/](apple/) |"
+    echo "| 软件开发：plan/TDD/debug/subagent | [software-development/](software-development/) |"
+    echo "| Agent调度：Claude Code/Codex/OpenCode | [autonomous-ai-agents/](autonomous-ai-agents/) |"
+    echo "| 效率工具：Notion/Linear/PowerPoint/PDF | [productivity/](productivity/) |"
+    echo "| Webhook触发自动化 | [devops/webhook-subscriptions/](devops/webhook-subscriptions/) |"
+    echo "| Docker容器管理 | [docker-management/](docker-management/) |"
+    echo "| 邮件/智能家居/笔记 | [himalaya/](email/himalaya/) [openhue/](smart-home/openhue/) [obsidian/](note-taking/obsidian/) |"
+    echo "| 健身营养/游戏/社交媒体 | [fitness-nutrition/](fitness-nutrition/) [gaming/](gaming/) [xitter/](social-media/xitter/) |"
     echo ""
     echo "---"
     echo ""
@@ -121,19 +76,20 @@ generate_root_agents() {
     echo "| 目录 | 内容 |"
     echo "|------|------|"
     echo "| \`apple/\` | macOS Notes/Reminders/FindMy/iMessage (4 skills) |"
-    echo "| \`github/\` | PR/Issues/CodeReview/Repo全流程 (6 skills) |"
-    echo "| \`mlops/\` | 训练/推理/评估/云端GPU (22 skills) |"
-    echo "| \`research/\` | 论文/博客监控/预测市场 (5 skills) |"
+    echo "| \`github/\` | PR/Issues/CodeReview/Repo (6 skills) |"
+    echo "| \`mlops/\` | 训练/推理/评估/云GPU (22 skills) |"
+    echo "| \`research/\` | 论文/博客/预测市场 (5 skills) |"
     echo "| \`creative/\` | 媒体生成/可视化/视频 (9 skills) |"
     echo "| \`productivity/\` | Notion/Linear/PowerPoint/PDF (7 skills) |"
+    echo "| \`software-dev/\` | plan/TDD/debug/subagent (7 skills) |"
+    echo "| \`autonomous/\` | Claude Code/Codex/OpenCode (4 skills) |"
     echo ""
-    echo "> 加载 Skill：\`skill_view(name=\"skill-name\")\`"
+    echo "> 加载 Skill：\`skill_view(name=\"category/skill-name\")\`"
     echo ""
     echo "*最后生成：$(date '+%Y-%m-%d %H:%M:%S')*"
 
   } > "$out"
 
-  # 验证行数约束
   local lines=$(wc -l < "$out")
   if [[ $lines -gt 60 ]]; then
     warn "$out 为 ${lines}行（>60行限制）"
@@ -142,16 +98,17 @@ generate_root_agents() {
   fi
 }
 
-# ── 生成子目录 AGENTS.md（mlops 多级 + 其余标准）──────────────────
+# ── 生成子目录 AGENTS.md ──────────────────────────────────────
 generate_sub_agents() {
   local sub_dirs="creative github media mlops research"
 
   for sub in $sub_dirs; do
     [[ -d "$sub" ]] || continue
     local out="$sub/AGENTS.md"
+    local sub_skill_count=0
 
     {
-      echo "# $(echo "$sub" | tr 'a-z' 'A-Z') — $(get_category "$sub")"
+      echo "# $(echo "$sub" | tr 'a-z' 'A-Z')"
       echo ""
       echo "> 入口：[skills/AGENTS.md](../AGENTS.md)"
       echo "> 本文件由 \`generate-agents.sh\` 自动生成"
@@ -160,11 +117,10 @@ generate_sub_agents() {
       echo ""
       echo "## 快速路由"
       echo ""
-      echo "| 任务 | 使用 Skill |"
-      echo "|------|-----------|"
+      echo "| 任务 | Skill |"
+      echo "|------|-------|"
 
-      skill_count=0
-
+      # 收集所有 skill（含 mlops 多级）
       if [[ "$sub" == "mlops" ]]; then
         for sub2_dir in "$sub"/*/; do
           [[ -d "$sub2_dir" ]] || continue
@@ -172,15 +128,15 @@ generate_sub_agents() {
           if [[ -f "${sub2_dir}SKILL.md" ]]; then
             desc=$(get_description "${sub2_dir}SKILL.md")
             echo "| $(echo "$desc" | cut -c1-50)… | \`${sub2_name}\` |"
-            ((skill_count++)) || true
+            sub_skill_count=$((sub_skill_count+1))
           else
-            echo "| **${sub2_name}/** |"
             for skill_dir in "${sub2_dir}"*/; do
               [[ -d "$skill_dir" && -f "${skill_dir}SKILL.md" ]] || continue
               skill_name=$(basename "$skill_dir")
               desc=$(get_description "${skill_dir}SKILL.md")
-              echo "|   → $(echo "$desc" | cut -c1-40)… | \`${sub2_name}/${skill_name}\` |"
-              ((skill_count++)) || true
+              # 统一用 sub2/skill 全路径（带前缀）
+              echo "| $(echo "$desc" | cut -c1-40)… | \`${sub2_name}/${skill_name}\` |"
+              sub_skill_count=$((sub_skill_count+1))
             done
           fi
         done
@@ -189,8 +145,8 @@ generate_sub_agents() {
           [[ -d "$skill_dir" && -f "${skill_dir}SKILL.md" ]] || continue
           skill_name=$(basename "$skill_dir")
           desc=$(get_description "${skill_dir}SKILL.md")
-          echo "| $(echo "$desc" | cut -c1-40)… | \`${skill_name}\` |"
-          ((skill_count++)) || true
+          echo "| $(echo "$desc" | cut -c1-50)… | \`${skill_name}\` |"
+          sub_skill_count=$((sub_skill_count+1))
         done
       fi
 
@@ -237,7 +193,7 @@ generate_sub_agents() {
 
     } > "$out"
 
-    pass "生成 $out ($skill_count 个 skill)"
+    pass "生成 $out ($sub_skill_count 个 skill)"
   done
 }
 

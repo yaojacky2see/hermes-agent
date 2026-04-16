@@ -1,4 +1,4 @@
-# CREATIVE — 🎨 创意工具
+# CREATIVE
 
 > 入口：[skills/AGENTS.md](../AGENTS.md)
 > 本文件由 `generate-agents.sh` 自动生成
@@ -7,15 +7,15 @@
 
 ## 快速路由
 
-| 任务 | 使用 Skill |
-|------|-----------|
-| Generate professional dark-themed system… | `architecture-diagram` |
-| Generate ASCII art using pyfiglet (571 f… | `ascii-art` |
-| "Production pipeline for ASCII art video… | `ascii-video` |
-| "Generate project ideas through creative… | `creative-ideation` |
-| Create hand-drawn style diagrams using E… | `excalidraw` |
-| "Production pipeline for mathematical an… | `manim-video` |
-| "Production pipeline for interactive and… | `p5js` |
+| 任务 | Skill |
+|------|-------|
+| Generate professional dark-themed system architect… | `architecture-diagram` |
+| Generate ASCII art using pyfiglet (571 fonts), cow… | `ascii-art` |
+| "Production pipeline for ASCII art video — any for… | `ascii-video` |
+| "Generate project ideas through creative constrain… | `creative-ideation` |
+| Create hand-drawn style diagrams using Excalidraw … | `excalidraw` |
+| "Production pipeline for mathematical and technica… | `manim-video` |
+| "Production pipeline for interactive and generativ… | `p5js` |
 | >… | `popular-web-designs` |
 | >… | `songwriting-and-ai-music` |
 
@@ -50,4 +50,4 @@
 ### `songwriting-and-ai-music`
 - **描述：** >
 
-*最后生成：2026-04-16 10:10:33*
+*最后生成：2026-04-16 10:26:10*

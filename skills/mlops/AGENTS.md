@@ -1,4 +1,4 @@
-# MLOPS — 🤖 MLOps
+# MLOPS
 
 > 入口：[skills/AGENTS.md](../AGENTS.md)
 > 本文件由 `generate-agents.sh` 自动生成
@@ -7,37 +7,30 @@
 
 ## 快速路由
 
-| 任务 | 使用 Skill |
-|------|-----------|
-| **cloud/** |
-|   → Serverless GPU cloud platform for runnin… | `cloud/modal` |
-| **evaluation/** |
-|   → Evaluates LLMs across 60+ academic bench… | `evaluation/lm-evaluation-harness` |
-|   → Track ML experiments with automatic logg… | `evaluation/weights-and-biases` |
+| 任务 | Skill |
+|------|-------|
+| Serverless GPU cloud platform for runnin… | `cloud/modal` |
+| Evaluates LLMs across 60+ academic bench… | `evaluation/lm-evaluation-harness` |
+| Track ML experiments with automatic logg… | `evaluation/weights-and-biases` |
 | Hugging Face Hub CLI (hf) — search, download, and … | `huggingface-hub` |
-| **inference/** |
-|   → GGUF format and llama.cpp quantization f… | `inference/gguf` |
-|   → Control LLM output with regex and gramma… | `inference/guidance` |
-|   → Runs LLM inference on CPU, Apple Silicon… | `inference/llama-cpp` |
-|   → Remove refusal behaviors from open-weigh… | `inference/obliteratus` |
-|   → Guarantee valid JSON/XML/code structure … | `inference/outlines` |
-|   → Serves LLMs with high throughput using v… | `inference/vllm` |
-| **models/** |
-|   → PyTorch library for audio generation inc… | `models/audiocraft` |
-|   → OpenAI's model connecting vision and lan… | `models/clip` |
-|   → Foundation model for image segmentation … | `models/segment-anything` |
-|   → State-of-the-art text-to-image generatio… | `models/stable-diffusion` |
-|   → OpenAI's general-purpose speech recognit… | `models/whisper` |
-| **research/** |
-|   → Build complex AI systems with declarativ… | `research/dspy` |
-| **training/** |
-|   → Expert guidance for fine-tuning LLMs wit… | `training/axolotl` |
-|   → Expert guidance for GRPO/RL fine-tuning … | `training/grpo-rl-training` |
-|   → Parameter-efficient fine-tuning for LLMs… | `training/peft` |
-|   → Expert guidance for Fully Sharded Data P… | `training/pytorch-fsdp` |
-|   → Fine-tune LLMs using reinforcement learn… | `training/trl-fine-tuning` |
-|   → Expert guidance for fast fine-tuning wit… | `training/unsloth` |
-| **vector-databases/** |
+| GGUF format and llama.cpp quantization f… | `inference/gguf` |
+| Control LLM output with regex and gramma… | `inference/guidance` |
+| Runs LLM inference on CPU, Apple Silicon… | `inference/llama-cpp` |
+| Remove refusal behaviors from open-weigh… | `inference/obliteratus` |
+| Guarantee valid JSON/XML/code structure … | `inference/outlines` |
+| Serves LLMs with high throughput using v… | `inference/vllm` |
+| PyTorch library for audio generation inc… | `models/audiocraft` |
+| OpenAI's model connecting vision and lan… | `models/clip` |
+| Foundation model for image segmentation … | `models/segment-anything` |
+| State-of-the-art text-to-image generatio… | `models/stable-diffusion` |
+| OpenAI's general-purpose speech recognit… | `models/whisper` |
+| Build complex AI systems with declarativ… | `research/dspy` |
+| Expert guidance for fine-tuning LLMs wit… | `training/axolotl` |
+| Expert guidance for GRPO/RL fine-tuning … | `training/grpo-rl-training` |
+| Parameter-efficient fine-tuning for LLMs… | `training/peft` |
+| Expert guidance for Fully Sharded Data P… | `training/pytorch-fsdp` |
+| Fine-tune LLMs using reinforcement learn… | `training/trl-fine-tuning` |
+| Expert guidance for fast fine-tuning wit… | `training/unsloth` |
 
 ---
 
@@ -123,4 +116,4 @@
 
 ### 📁 vector-databases/
 
-*最后生成：2026-04-16 10:10:33*
+*最后生成：2026-04-16 10:26:10*

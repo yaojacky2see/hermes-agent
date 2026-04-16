@@ -1,4 +1,4 @@
-# GITHUB — 🐙 GitHub
+# GITHUB
 
 > 入口：[skills/AGENTS.md](../AGENTS.md)
 > 本文件由 `generate-agents.sh` 自动生成
@@ -7,14 +7,14 @@
 
 ## 快速路由
 
-| 任务 | 使用 Skill |
-|------|-----------|
-| Inspect and analyze codebases using pygo… | `codebase-inspection` |
-| Set up GitHub authentication for the age… | `github-auth` |
-| Review code changes by analyzing git dif… | `github-code-review` |
-| Create, manage, triage, and close GitHub… | `github-issues` |
-| Full pull request lifecycle — create bra… | `github-pr-workflow` |
-| Clone, create, fork, configure, and mana… | `github-repo-management` |
+| 任务 | Skill |
+|------|-------|
+| Inspect and analyze codebases using pygount for LO… | `codebase-inspection` |
+| Set up GitHub authentication for the agent using g… | `github-auth` |
+| Review code changes by analyzing git diffs, leavin… | `github-code-review` |
+| Create, manage, triage, and close GitHub issues. S… | `github-issues` |
+| Full pull request lifecycle — create branches, com… | `github-pr-workflow` |
+| Clone, create, fork, configure, and manage GitHub … | `github-repo-management` |
 
 ---
 
@@ -38,4 +38,4 @@
 ### `github-repo-management`
 - **描述：** Clone, create, fork, configure, and manage GitHub repositories. Manage remotes, secrets, releases, and workflows. Works with gh CLI or falls back to git + GitHub REST API via curl.
 
-*最后生成：2026-04-16 10:10:33*
+*最后生成：2026-04-16 10:26:10*
