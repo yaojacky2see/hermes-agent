@@ -1,7 +1,7 @@
-# MLOps — 智能体地图
+# MLOPS — 🤖 MLOps
 
-> 入口：`skills/AGENTS.md`
-> 本目录包含 MLOps 全套工具的子地图。按工作流阶段分流。
+> 入口：[skills/AGENTS.md](../AGENTS.md)
+> 本文件由 `generate-agents.sh` 自动生成
 
 ---
 
@@ -9,83 +9,118 @@
 
 | 任务 | 使用 Skill |
 |------|-----------|
-| **训练** | |
-| LLM 高效微调（LoRA/QLoRA） | `peft` |
-| 快速微调（2-5x 提速） | `unsloth` |
-| Axolotl 微调框架（100+模型） | `axolotl` |
-| RLHF / DPO / PPO / GRPO | `trl-fine-tuning` / `grpo-rl-training` |
-| PyTorch FSDP 分布式训练 | `pytorch-fsdp` |
-| **推理与服务** | |
-| vLLM 高吞吐推理服务 | `vllm` |
-| llama.cpp CPU/Apple Silicon 推理 | `llama-cpp` / `gguf` |
-| Modal 无服务器 GPU | `modal` |
-| 结构化生成（JSON/代码保证） | `outlines` / `guidance` |
-| **评测** | |
-| LLM 学术评测（MMLU/HumanEval/GSM8K） | `lm-evaluation-harness` |
-| 实验追踪与可视化 | `weights-and-biases` |
-| **推理脚本** | |
-| 脚本管理 | `inference` |
-| **模型管理** | |
-| HuggingFace Hub（模型/数据集） | `huggingface-hub` |
-| 音频模型（MusicGen/AudioGen） | `audiocraft` |
-| CLIP 视觉-语言 | `clip` |
-| SAM 图像分割 | `segment-anything` |
-| Whisper 语音识别 | `whisper` |
-| Stable Diffusion 文生图 | `stable-diffusion` |
-| 移除 LLM 拒答行为 | `obliteratus` |
-| **云服务** | |
-| Modal 无服务器 GPU | `modal` |
-| **向量数据库** | |
-| 向量数据库（待填充） | `vector-databases/` |
+| **cloud/** |
+|   → Serverless GPU cloud platform for runnin… | `cloud/modal` |
+| **evaluation/** |
+|   → Evaluates LLMs across 60+ academic bench… | `evaluation/lm-evaluation-harness` |
+|   → Track ML experiments with automatic logg… | `evaluation/weights-and-biases` |
+| Hugging Face Hub CLI (hf) — search, download, and … | `huggingface-hub` |
+| **inference/** |
+|   → GGUF format and llama.cpp quantization f… | `inference/gguf` |
+|   → Control LLM output with regex and gramma… | `inference/guidance` |
+|   → Runs LLM inference on CPU, Apple Silicon… | `inference/llama-cpp` |
+|   → Remove refusal behaviors from open-weigh… | `inference/obliteratus` |
+|   → Guarantee valid JSON/XML/code structure … | `inference/outlines` |
+|   → Serves LLMs with high throughput using v… | `inference/vllm` |
+| **models/** |
+|   → PyTorch library for audio generation inc… | `models/audiocraft` |
+|   → OpenAI's model connecting vision and lan… | `models/clip` |
+|   → Foundation model for image segmentation … | `models/segment-anything` |
+|   → State-of-the-art text-to-image generatio… | `models/stable-diffusion` |
+|   → OpenAI's general-purpose speech recognit… | `models/whisper` |
+| **research/** |
+|   → Build complex AI systems with declarativ… | `research/dspy` |
+| **training/** |
+|   → Expert guidance for fine-tuning LLMs wit… | `training/axolotl` |
+|   → Expert guidance for GRPO/RL fine-tuning … | `training/grpo-rl-training` |
+|   → Parameter-efficient fine-tuning for LLMs… | `training/peft` |
+|   → Expert guidance for Fully Sharded Data P… | `training/pytorch-fsdp` |
+|   → Fine-tune LLMs using reinforcement learn… | `training/trl-fine-tuning` |
+|   → Expert guidance for fast fine-tuning wit… | `training/unsloth` |
+| **vector-databases/** |
 
 ---
 
 ## Skill 详情
 
-### 训练（training/）
+### 📁 cloud/
 
-| Skill | 用途 | 关键特性 |
-|-------|------|---------|
-| `peft` | LoRA/QLoRA 高效微调 | ≤1% 参数，HuggingFace 生态 |
-| `unsloth` | 快速微调 | 2-5x 提速，50-80% 显存节省 |
-| `axolotl` | 微调框架 | 100+ 模型，DPO/KTO/ORPO/GRPO |
-| `trl-fine-tuning` | RLHF 全套 | SFT、DPO、PPO、GRPO |
-| `grpo-rl-training` | GRPO 训练 | TRL 支持，推理优化 |
-| `pytorch-fsdp` | 分布式训练 | 参数分片、混合精度、CPU卸载 |
+#### `modal`
+- **描述：** Serverless GPU cloud platform for running ML workloads. Use when you need on-demand GPU access without infrastructure management, deploying ML models as APIs, or running batch jobs with automatic scaling.
 
-### 推理与服务（inference/）
+### 📁 evaluation/
 
-| Skill | 用途 | 关键特性 |
-|-------|------|---------|
-| `vllm` | vLLM 推理 | PagedAttention、连续批处理、OpenAI兼容 |
-| `llama-cpp` | CPU/Apple Silicon | GGUF量化，消费级硬件 |
-| `gguf` | GGUF 量化 | 2-8bit 量化，无需GPU |
-| `outlines` | 结构化生成 | Pydantic模型，JSON保证 |
-| `guidance` | 受控生成 | regex/grammar 约束 |
+#### `lm-evaluation-harness`
+- **描述：** Evaluates LLMs across 60+ academic benchmarks (MMLU, HumanEval, GSM8K, TruthfulQA, HellaSwag). Use when benchmarking model quality, comparing models, reporting academic results, or tracking training progress. Industry standard used by EleutherAI, HuggingFace, and major labs. Supports HuggingFace, vLLM, APIs.
 
-### 评测（evaluation/）
+#### `weights-and-biases`
+- **描述：** Track ML experiments with automatic logging, visualize training in real-time, optimize hyperparameters with sweeps, and manage model registry with W&B - collaborative MLOps platform
 
-| Skill | 用途 | 关键特性 |
-|-------|------|---------|
-| `lm-evaluation-harness` | LLM 学术评测 | 60+基准，EleutherAI标准 |
-| `weights-and-biases` | 实验追踪 | 实时可视化、超参搜索 |
+### `huggingface-hub`
+- **描述：** Hugging Face Hub CLI (hf) — search, download, and upload models and datasets, manage repos, query datasets with SQL, deploy inference endpoints, manage Spaces and buckets.
 
-### 云（cloud/）
+### 📁 inference/
 
-| Skill | 用途 | 关键特性 |
-|-------|------|---------|
-| `modal` | 无服务器GPU | 按需GPU、自动扩缩容 |
+#### `gguf`
+- **描述：** GGUF format and llama.cpp quantization for efficient CPU/GPU inference. Use when deploying models on consumer hardware, Apple Silicon, or when needing flexible quantization from 2-8 bit without GPU requirements.
 
----
+#### `guidance`
+- **描述：** Control LLM output with regex and grammars, guarantee valid JSON/XML/code generation, enforce structured formats, and build multi-step workflows with Guidance - Microsoft Research's constrained generation framework
 
-## 重要约定
+#### `llama-cpp`
+- **描述：** Runs LLM inference on CPU, Apple Silicon, and consumer GPUs without NVIDIA hardware. Use for edge deployment, M1/M2/M3 Macs, AMD/Intel GPUs, or when CUDA is unavailable. Supports GGUF quantization (1.5-8 bit) for reduced memory and 4-10× speedup vs PyTorch on CPU.
 
-1. **微调之前**，先确认：数据集是否准备好、基座模型是否合适、目标硬件是否足够
-2. **评测 LLM** → 永远用 `lm-evaluation-harness`，不用自己写的评测脚本
-3. **生产推理** → 优先 `vllm`，次选 `llama-cpp`（无GPU时）
-4. **分布式训练** → 8卡以上考虑 `pytorch-fsdp`，否则 `unsloth` 更简单
-5. **量化推理** → 消费级硬件用 `gguf`，有GPU且需要高吞吐用 `vllm`
+#### `obliteratus`
+- **描述：** Remove refusal behaviors from open-weight LLMs using OBLITERATUS — mechanistic interpretability techniques (diff-in-means, SVD, whitened SVD, LEACE, SAE decomposition, etc.) to excise guardrails while preserving reasoning. 9 CLI methods, 28 analysis modules, 116 model presets across 5 compute tiers, tournament evaluation, and telemetry-driven recommendations. Use when a user wants to uncensor, abliterate, or remove refusal from an LLM.
 
----
+#### `outlines`
+- **描述：** Guarantee valid JSON/XML/code structure during generation, use Pydantic models for type-safe outputs, support local models (Transformers, vLLM), and maximize inference speed with Outlines - dottxt.ai's structured generation library
 
-*本目录是 `skills/AGENTS.md` 的子地图，渐进式披露。*
+#### `vllm`
+- **描述：** Serves LLMs with high throughput using vLLM's PagedAttention and continuous batching. Use when deploying production LLM APIs, optimizing inference latency/throughput, or serving models with limited GPU memory. Supports OpenAI-compatible endpoints, quantization (GPTQ/AWQ/FP8), and tensor parallelism.
+
+### 📁 models/
+
+#### `audiocraft`
+- **描述：** PyTorch library for audio generation including text-to-music (MusicGen) and text-to-sound (AudioGen). Use when you need to generate music from text descriptions, create sound effects, or perform melody-conditioned music generation.
+
+#### `clip`
+- **描述：** OpenAI's model connecting vision and language. Enables zero-shot image classification, image-text matching, and cross-modal retrieval. Trained on 400M image-text pairs. Use for image search, content moderation, or vision-language tasks without fine-tuning. Best for general-purpose image understanding.
+
+#### `segment-anything`
+- **描述：** Foundation model for image segmentation with zero-shot transfer. Use when you need to segment any object in images using points, boxes, or masks as prompts, or automatically generate all object masks in an image.
+
+#### `stable-diffusion`
+- **描述：** State-of-the-art text-to-image generation with Stable Diffusion models via HuggingFace Diffusers. Use when generating images from text prompts, performing image-to-image translation, inpainting, or building custom diffusion pipelines.
+
+#### `whisper`
+- **描述：** OpenAI's general-purpose speech recognition model. Supports 99 languages, transcription, translation to English, and language identification. Six model sizes from tiny (39M params) to large (1550M params). Use for speech-to-text, podcast transcription, or multilingual audio processing. Best for robust, multilingual ASR.
+
+### 📁 research/
+
+#### `dspy`
+- **描述：** Build complex AI systems with declarative programming, optimize prompts automatically, create modular RAG systems and agents with DSPy - Stanford NLP's framework for systematic LM programming
+
+### 📁 training/
+
+#### `axolotl`
+- **描述：** Expert guidance for fine-tuning LLMs with Axolotl - YAML configs, 100+ models, LoRA/QLoRA, DPO/KTO/ORPO/GRPO, multimodal support
+
+#### `grpo-rl-training`
+- **描述：** Expert guidance for GRPO/RL fine-tuning with TRL for reasoning and task-specific model training
+
+#### `peft`
+- **描述：** Parameter-efficient fine-tuning for LLMs using LoRA, QLoRA, and 25+ methods. Use when fine-tuning large models (7B-70B) with limited GPU memory, when you need to train <1% of parameters with minimal accuracy loss, or for multi-adapter serving. HuggingFace's official library integrated with transformers ecosystem.
+
+#### `pytorch-fsdp`
+- **描述：** Expert guidance for Fully Sharded Data Parallel training with PyTorch FSDP - parameter sharding, mixed precision, CPU offloading, FSDP2
+
+#### `trl-fine-tuning`
+- **描述：** Fine-tune LLMs using reinforcement learning with TRL - SFT for instruction tuning, DPO for preference alignment, PPO/GRPO for reward optimization, and reward model training. Use when need RLHF, align model with preferences, or train from human feedback. Works with HuggingFace Transformers.
+
+#### `unsloth`
+- **描述：** Expert guidance for fast fine-tuning with Unsloth - 2-5x faster training, 50-80% less memory, LoRA/QLoRA optimization
+
+### 📁 vector-databases/
+
+*最后生成：2026-04-16 10:10:33*
