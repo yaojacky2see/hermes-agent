@@ -5,7 +5,14 @@
 # 原理：AGENTS.md 是目录结构 + SKILL.md metadata 的投影
 #       由机器生成，保证与实际状态永远一致
 #
-# 机械化执行核心：lint 规则 -> 自动生成 -> 验证闭环
+# 机械化执行核心：
+#   lint 规则（validate-skills.sh）
+#     → 自动生成（generate-agents.sh）
+#       → 验证闭环
+#
+# Agent Readability 约束：
+#   根 AGENTS.md ≤60 行（HumanLayer规则）
+#   子 AGENTS.md 不限（渐进式披露）
 # =====================================================================
 set -euo pipefail
 
@@ -15,6 +22,7 @@ cd "$SKILLS_DIR"
 RED='\033[0;31m'; GREEN='\033[0;32m'; CYAN='\033[0;36m'
 BOLD='\033[1m'; RESET='\033[0m'
 pass() { echo -e "${GREEN}[GEN]${RESET}  $1"; }
+warn() { echo -e "${RED}[WARN]${RESET}  $1"; }
 
 # ── 从 SKILL.md 提取真实描述（跳过 YAML frontmatter）─────────────
 get_description() {
@@ -24,10 +32,7 @@ get_description() {
     return
   fi
 
-  # 检查是否有 YAML frontmatter
   if grep -q '^---$' "$skill_md" 2>/dev/null; then
-    # 取 --- 之后、第一个 # 之前的实际描述文字
-    # 通常 description: 字段在 frontmatter 里
     local desc=$(awk '/^---$/,/^---$/ {next} /^description:/ {sub(/^description:[[:space:]]*/, ""); print; exit}' "$skill_md")
     if [[ -n "$desc" ]]; then
       echo "$desc"
@@ -35,7 +40,6 @@ get_description() {
     fi
   fi
 
-  # 回退：取第一个非标题、非空、非 > 的行
   sed -n '1,/^[#>]/p' "$skill_md" 2>/dev/null \
     | grep -v '^#' | grep -v '^>' | grep -v '^$' | grep -v '^---$' \
     | head -1 \
@@ -57,7 +61,7 @@ get_category() {
     fitness*)       echo "💪 健身/营养" ;;
     gaming)         echo "🎮 游戏" ;;
     gifs)           echo "🎬 GIF" ;;
-    github)          echo "🐙 GitHub" ;;
+    github)         echo "🐙 GitHub" ;;
     index-cache)    echo "🗂️ 索引/缓存" ;;
     leisure)        echo "🌿 生活休闲" ;;
     mcp)            echo "🔌 MCP 协议" ;;
@@ -78,81 +82,67 @@ get_category() {
   esac
 }
 
-# ── 生成根 AGENTS.md ─────────────────────────────────────────
+# ── 生成根 AGENTS.md（≤60行紧凑路由表）─────────────────────────────
+# HumanLayer规则：AGENTS.md >60行效果下降
+# 约束越严，自主性越强
 generate_root_agents() {
   local out="AGENTS.md"
 
   {
     echo "# Hermes Agent Skills — 智能体地图"
     echo ""
-    echo "> 本文件由 \`generate-agents.sh\` 自动生成 — 禁止手工编辑"
-    echo "> **核心原则：仓库即记录系统。不在仓库里的约束，对智能体不存在。**"
+    echo "> 本文件由 \`generate-agents.sh\` 自动生成。完整详情在子目录 AGENTS.md。"
+    echo "> **核心原则：仓库即记录系统。**"
     echo ""
     echo "---"
     echo ""
-    echo "## 技能速查"
+    echo "## 路由表（按任务类型）"
     echo ""
-
-    # 遍历一级分类目录
-    for cat_dir in */; do
-      [[ -d "$cat_dir" && ! "$cat_dir" =~ ^(scripts|AGENTS\.md)/ ]] || continue
-      [[ -f "${cat_dir}SKILL.md" || -d "${cat_dir}" ]] || continue
-
-      cat_name="${cat_dir%/}"
-      cat_label=$(get_category "$cat_name")
-
-      if [[ -f "${cat_dir}AGENTS.md" ]]; then
-        # 有子 AGENTS.md 的分类：显示引用链接
-        echo "### $cat_label"
-        echo ""
-        echo "| Skill | 用途 |"
-        echo "|-------|------|"
-        # 从子 AGENTS.md 提取 skill 行
-        awk '/^\| \`/ {print}' "${cat_dir}AGENTS.md" 2>/dev/null || true
-        echo ""
-        echo "> 详情：[${cat_name}/AGENTS.md](${cat_name}/AGENTS.md)"
-        echo ""
-      elif [[ "$cat_name" == "apple" ]]; then
-        # apple 有嵌套子 skill
-        echo "### $cat_label"
-        echo ""
-        echo "| Skill | 用途 |"
-        echo "|-------|------|"
-        for skill_dir in "${cat_dir}"*/; do
-          [[ -d "$skill_dir" ]] || continue
-          skill_name=$(basename "$skill_dir")
-          [[ -f "${skill_dir}SKILL.md" ]] || continue
-          desc=$(get_description "${skill_dir}SKILL.md")
-          echo "| \`${skill_name}\` | ${desc:-—} |"
-        done
-        echo ""
-      else
-        # 单层分类
-        echo "### $cat_label"
-        echo ""
-        echo "| Skill | 用途 |"
-        echo "|-------|------|"
-        for skill_dir in "${cat_dir}"*/; do
-          [[ -d "$skill_dir" ]] || continue
-          skill_name=$(basename "$skill_dir")
-          [[ -f "${skill_dir}SKILL.md" ]] || continue
-          desc=$(get_description "${skill_dir}SKILL.md")
-          echo "| \`${skill_name}\` | ${desc:-—} |"
-        done
-        echo ""
-      fi
-    done
-
+    echo "| 任务 | Skill | 入口 |"
+    echo "|------|-------|------|"
+    echo "| GitHub/PR/Issues | \`github-pr-workflow\` \`github-code-review\` \`github-issues\` | github/ |"
+    echo "| MLOps全流程 | 微调/推理/评估/云GPU | mlops/ |"
+    echo "| 创意媒体 | ascii/art/video, excalidraw, youtube, gif | creative/ |"
+    echo "| 预测市场/研究 | \`polymarket\` \`arxiv\` \`llm-wiki\` | research/ |"
+    echo "| macOS系统 | \`apple-notes\` \`apple-reminders\` \`findmy\` \`imessage\` | apple/ |"
+    echo "| 代码开发 | \`plan\` \`systematic-debugging\` \`test-driven-development\` \`subagent-driven\` | software-dev/ |"
+    echo "| Agent调度 | \`claude-code\` \`codex\` \`opencode\` | autonomous/ |"
+    echo "| 效率工具 | \`notion\` \`linear\` \`powerpoint\` \`ocr-pdf\` \`google-workspace\` | productivity/ |"
+    echo "| Webhook/自动化 | \`webhook-subscriptions\` | devops/ |"
+    echo "| Docker | \`docker-management\` | docker/ |"
+    echo "| 个人数据 | \`openhue\` \`himalaya\` \`obsidian\` | — |"
+    echo "| 健身/游戏 | \`fitness-nutrition\` \`minecraft\` \`pokemon\` | — |"
+    echo "| 社交媒体 | \`xitter\` | social-media/ |"
+    echo ""
     echo "---"
+    echo ""
+    echo "## 子地图索引"
+    echo ""
+    echo "| 目录 | 内容 |"
+    echo "|------|------|"
+    echo "| \`apple/\` | macOS Notes/Reminders/FindMy/iMessage (4 skills) |"
+    echo "| \`github/\` | PR/Issues/CodeReview/Repo全流程 (6 skills) |"
+    echo "| \`mlops/\` | 训练/推理/评估/云端GPU (22 skills) |"
+    echo "| \`research/\` | 论文/博客监控/预测市场 (5 skills) |"
+    echo "| \`creative/\` | 媒体生成/可视化/视频 (9 skills) |"
+    echo "| \`productivity/\` | Notion/Linear/PowerPoint/PDF (7 skills) |"
+    echo ""
+    echo "> 加载 Skill：\`skill_view(name=\"skill-name\")\`"
     echo ""
     echo "*最后生成：$(date '+%Y-%m-%d %H:%M:%S')*"
 
   } > "$out"
 
-  pass "生成 $out"
+  # 验证行数约束
+  local lines=$(wc -l < "$out")
+  if [[ $lines -gt 60 ]]; then
+    warn "$out 为 ${lines}行（>60行限制）"
+  else
+    pass "生成 $out (${lines}行 ≤60行)"
+  fi
 }
 
-# ── 生成子目录 AGENTS.md（mlops 需要递归处理多级）─────────────────
+# ── 生成子目录 AGENTS.md（mlops 多级 + 其余标准）──────────────────
 generate_sub_agents() {
   local sub_dirs="creative github media mlops research"
 
@@ -175,18 +165,15 @@ generate_sub_agents() {
 
       skill_count=0
 
-      # mlops 有多级子目录（training/models/inference/cloud/evaluation/vector-databases）
       if [[ "$sub" == "mlops" ]]; then
         for sub2_dir in "$sub"/*/; do
           [[ -d "$sub2_dir" ]] || continue
           sub2_name=$(basename "$sub2_dir")
           if [[ -f "${sub2_dir}SKILL.md" ]]; then
-            # 直接 skill
             desc=$(get_description "${sub2_dir}SKILL.md")
             echo "| $(echo "$desc" | cut -c1-50)… | \`${sub2_name}\` |"
             ((skill_count++)) || true
           else
-            # 二级子目录
             echo "| **${sub2_name}/** |"
             for skill_dir in "${sub2_dir}"*/; do
               [[ -d "$skill_dir" && -f "${skill_dir}SKILL.md" ]] || continue
@@ -198,7 +185,6 @@ generate_sub_agents() {
           fi
         done
       else
-        # 标准子目录（creative/github/media/research）
         for skill_dir in "$sub"/*/; do
           [[ -d "$skill_dir" && -f "${skill_dir}SKILL.md" ]] || continue
           skill_name=$(basename "$skill_dir")
@@ -214,7 +200,6 @@ generate_sub_agents() {
       echo "## Skill 详情"
       echo ""
 
-      # mlops 多级详情
       if [[ "$sub" == "mlops" ]]; then
         for sub2_dir in "$sub"/*/; do
           [[ -d "$sub2_dir" ]] || continue
@@ -238,7 +223,6 @@ generate_sub_agents() {
           fi
         done
       else
-        # 标准详情
         for skill_dir in "$sub"/*/; do
           [[ -d "$skill_dir" && -f "${skill_dir}SKILL.md" ]] || continue
           skill_name=$(basename "$skill_dir")
